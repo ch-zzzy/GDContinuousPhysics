@@ -6,7 +6,7 @@
 using namespace geode::prelude;
 using namespace continuousphysics::prelude;
 
-static auto g_mod = Mod::get();
+auto mod = Mod::get();
 
 class $modify(CCEGLView) {
 	void pollEvents() {
@@ -20,7 +20,7 @@ class $modify(CCEGLView) {
 			|| playLayer->getChildByType<EndLevelLayer>(0)
 			|| playLayer->m_playerDied)
 		{
-			g_physicsState.firstFrame = true;
+			g_physicsState.m_firstFrame = true;
 		}
 		// clang-format on
 
@@ -34,7 +34,7 @@ class $modify(PlayerObject) {
 			PlayerObject::update(dt);
 			return;
 		}
-		processInputsUpToTimestamp(this);
+		preTick(this);
 		PlayerObject::update(dt);
 		postTick(this);
 	}
@@ -42,18 +42,18 @@ class $modify(PlayerObject) {
 
 $on_mod(Loaded) {
 	// TPS
-	float tps = g_mod->getSettingValue<float>("tps");
+	float tps = mod->getSettingValue<float>("tps");
 	updateTPS(tps);
 	listenForSettingChanges<float>("tps", +[](float val) { updateTPS(val); });
 
 	// Input Hz
-	g_inputHz = g_mod->getSettingValue<float>("input-hz");
+	g_inputHz = mod->getSettingValue<float>("input-hz");
 	listenForSettingChanges<float>(
 		"input-hz", +[](float val) { g_inputHz = val; });
 
 	// Velocity unrounding
 	g_velocityUnroundingEnabled =
-		g_mod->getSettingValue<bool>("velocity-unrounding");
+		mod->getSettingValue<bool>("velocity-unrounding");
 	toggleVelocityUnroundingPatches(g_velocityUnroundingEnabled);
 	listenForSettingChanges<bool>(
 		"velocity-unrounding", +[](bool val) {
@@ -62,15 +62,15 @@ $on_mod(Loaded) {
 		});
 
 	// Subframes
-	g_subframesEnabled = g_mod->getSettingValue<bool>("subframes-enabled");
+	g_subframesEnabled = mod->getSettingValue<bool>("subframes-enabled");
 	listenForSettingChanges<bool>(
 		"subframes-enabled", +[](bool val) {
 			g_subframesEnabled = val;
-			updateTPS(g_mod->getSettingValue<float>("tps"));
+			updateTPS(mod->getSettingValue<float>("tps"));
 		});
 
 	// Mod active
-	g_modActive = !g_mod->getSettingValue<bool>("mod-disabled");
+	g_modActive = !mod->getSettingValue<bool>("mod-disabled");
 	listenForSettingChanges<bool>(
 		"mod-disabled", +[](bool val) { g_modActive = !val; });
 }
